@@ -40,13 +40,6 @@ PartialEM_train=[]
 PartialEM_test=[]
 
 for opt["seed"] in range(0,5):
-    train_BPD, test_BPD = PartialEMTrain(opt)
-    PartialEM_train.append(train_BPD)
-    PartialEM_test.append(test_BPD)
-
-    np.save(opt['result_path']+'PartialEM_train', PartialEM_train)
-    np.save(opt['result_path']+'PartialEM_test', PartialEM_test)
-
     train_BPD, test_BPD = JointELBOTrain(opt)
     JointELBO_train.append(train_BPD)
     JointELBO_test.append(test_BPD)

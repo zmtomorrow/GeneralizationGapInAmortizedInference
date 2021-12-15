@@ -161,7 +161,7 @@ def discretized_mix_logistic_logp(x, l, alpha=0.0001):
     mix_cdf_min=((1-alpha)*pi*cdf_min+(alpha/nr_mix)*uniform_cdf_min).sum(-1)
 
     log_probs =torch.log(mix_cdf_plus-mix_cdf_min)
-    return -log_probs.sum(1,2,3) 
+    return log_probs.sum([1,2,3]).mean()
 
 
 def discretized_mix_logistic_sample(l, nr_mix):

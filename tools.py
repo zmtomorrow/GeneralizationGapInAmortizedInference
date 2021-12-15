@@ -14,15 +14,12 @@ def batch_KL_diag_gaussian_std(mu_1, std_1, mu_2, std_2):
     )
 
 def log_prob_from_logits(x):
-    """ numerically stable log_softmax implementation that prevents overflow """
-    # TF ordering
     axis = len(x.size()) - 1
     m, _ = torch.max(x, dim=axis, keepdim=True)
     return x - m - torch.log(torch.sum(torch.exp(x - m), dim=axis, keepdim=True))
 
 
 def to_one_hot(tensor, n, fill_with=1.):
-    # we perform one hot encore with respect to the last axis
     one_hot = torch.FloatTensor(tensor.size() + (n,)).zero_()
     if tensor.is_cuda : one_hot = one_hot.to(tensor.device)
     one_hot.scatter_(len(tensor.size()), tensor.unsqueeze(-1), fill_with)
@@ -49,13 +46,3 @@ def off_diag_matrix(vec):
     pad1=torch.zeros(vec.shape[:-1]+torch.Size((l-1,1))).to(vec.device)
     pad2=torch.zeros(vec.shape[:-1]+torch.Size((1,l))).to(vec.device)
     return torch.cat((pad2,torch.cat((low_t_matrix,pad1),-1)),-2)
-
-
-
-def patch2channel(x,p_size=2):
-    patch_list=[]
-    for i in range(p_size):
-        for j in range(p_size):
-            patch_list.append(x[:,:,i::p_size,j::p_size])
-            
-    return torch.stack(patch_list,1)

@@ -19,13 +19,12 @@ class VAE(nn.Module):
             self.sample_op = lambda params: Bernoulli(logits=params).sample()
         elif opt['data_set']=='MNIST':
             self.x_flat_dim=784
-            if opt['x_dis']=='Logistic':
-                self.out_channels=2
-                self.encoder=densenet_encoder(input_dim=self.x_flat_dim, h_layer_num=opt['h_layer_num'], z_dim=self.z_dim,if_bn=opt['if_bn'])
-                self.decoder=densenet_decoder(o_dim=2, h_layer_num=opt['h_layer_num'], z_dim=self.z_dim,if_bn=opt['if_bn'])
-                self.criterion  = lambda  data,params : batch_logistic_logp(params[:,0:1,:,:],params[:,1:2,:,:],data)
-                self.sample_op = lambda params: batch_logistic_sample(params[:,0:1,:,:],params[:,1:2,:,:])
-    
+            self.out_channels=2
+            self.encoder=densenet_encoder(input_dim=self.x_flat_dim, h_layer_num=opt['h_layer_num'], z_dim=self.z_dim,if_bn=opt['if_bn'])
+            self.decoder=densenet_decoder(o_dim=2, h_layer_num=opt['h_layer_num'], z_dim=self.z_dim,if_bn=opt['if_bn'])
+            self.criterion  = lambda  data,params : batch_logistic_logp(params[:,0:1,:,:],params[:,1:2,:,:],data)
+            self.sample_op = lambda params: batch_logistic_sample(params[:,0:1,:,:],params[:,1:2,:,:])
+
         
         elif opt['data_set'] in ['CIFAR','SVHN']:
             if opt['x_dis']=='MixLogistic':
