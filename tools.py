@@ -18,6 +18,8 @@ def log_prob_from_logits(x):
     m, _ = torch.max(x, dim=axis, keepdim=True)
     return x - m - torch.log(torch.sum(torch.exp(x - m), dim=axis, keepdim=True))
 
+def softplusinv(x):
+    return torch.log(torch.exp(x)-1)
 
 def to_one_hot(tensor, n, fill_with=1.):
     one_hot = torch.FloatTensor(tensor.size() + (n,)).zero_()
