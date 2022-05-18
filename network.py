@@ -340,3 +340,61 @@ class Classifier(nn.Module):
         probs = F.softmax(logits, dim=-1)
         return probs
     
+
+    
+    
+
+class Residual(nn.Module):
+    def __init__(self, channels):
+        super(Residual, self).__init__()
+        self.block = nn.Sequential(
+            nn.ReLU(True),
+            nn.Conv2d(channels, channels, 3, 1, 1, bias=False),
+            nn.BatchNorm2d(channels),
+            nn.ReLU(True),
+            nn.Conv2d(channels, channels, 1, bias=False),
+            nn.BatchNorm2d(channels)
+        )
+
+    def forward(self, x):
+        return x + self.block(x)
+
+
+class fc_encoder(nn.Module):
+    def __init__(self, channels=256, latent_dim=8, embedding_dim=32):
+        super(fc_encoder, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, channels, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(channels),
+            nn.ReLU(True),
+            nn.Conv2d(channels, channels, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(channels),
+            Residual(channels),
+            Residual(channels),
+            nn.Conv2d(channels, latent_dim * embedding_dim*2, 1)
+        )
+
+    def forward(self, x):
+        z=self.encoder(x)
+        return z[:,:256,:,:].view(-1,16384),F.softplus(z[:,256:,:,:].view(-1,16384))
+
+
+class fc_decoder(nn.Module):
+    def __init__(self, channels=256, latent_dim=8, embedding_dim=32, out_channels=100):
+        super(fc_decoder, self).__init__()
+        self.decoder = nn.Sequential(
+            nn.Conv2d(latent_dim * embedding_dim, channels, 1, bias=False),
+            nn.BatchNorm2d(channels),
+            Residual(channels),
+            Residual(channels),
+            nn.ConvTranspose2d(channels, channels, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(channels),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(channels, channels, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(channels),
+            nn.ReLU(True),
+            nn.Conv2d(channels, out_channels, 1)
+        )
+
+    def forward(self, z):
+        return  self.decoder(z.view(-1,256,8,8))
