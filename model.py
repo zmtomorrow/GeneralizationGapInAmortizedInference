@@ -31,9 +31,9 @@ class VAE(nn.Module):
         
         elif opt['data_set'] in ['CIFAR','SVHN']:
             if opt['x_dis']=='MixLogistic':
-            self.decoder=fc_decoder(latent_channels=opt['z_channels'],out_channels=100)       
-            self.criterion  = lambda  data,params :discretized_mix_logistic_uniform(data, params)
-            self.sample_op = lambda  params : discretized_mix_logistic_sample(params)
+                self.decoder=fc_decoder(latent_channels=opt['z_channels'],out_channels=100)       
+                self.criterion  = lambda  data,params :discretized_mix_logistic_uniform(data, params)
+                self.sample_op = lambda  params : discretized_mix_logistic_sample(params)
             elif opt['x_dis']=='Logistic':
                 self.decoder=fc_decoder(latent_channels=opt['z_channels'],out_channels=9)       
                 self.criterion  = lambda  data,params :discretized_logistic(data, params)
