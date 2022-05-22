@@ -1,7 +1,7 @@
 from scipy.stats import norm
 import numpy as np
-from tools import *
-from utils import *
+# from tools import *
+# from utils import *
 from scipy.special import expit as sigmoid
 import torch.nn as nn
 
@@ -20,7 +20,7 @@ class ANSStack(object):
         if randominit:
             def unflatten(arr,t_prec):
                 return int(arr[0]) << t_prec | int(arr[1]), list(arr[2:])
-            other_bits = rng.randint(low=1 << 16, high=1 << 31, size=100, dtype=np.uint32)
+            other_bits = rng.randint(low=1 << 16, high=1 << 31, size=200, dtype=np.uint32)
             s_init,t_init=unflatten(other_bits,32)
             self.s, self.t_stack=int(s_init),[int(i) for i in t_init]
             self.init_length=self.get_length()
