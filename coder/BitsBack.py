@@ -1,12 +1,15 @@
 from scipy.stats import norm
 import numpy as np
-from tools import *
-from utils import *
+# from tools import *
+# from utils import *
+import torch
 from scipy.special import expit as sigmoid
 import torch.nn as nn
 from coder.rANS import *
 import torch.nn.functional as F
 
+def softplusinv(x):
+    return torch.log(torch.exp(x)-1)
 
 def optimal_posterior(img,model,opt):
     torch.manual_seed(0)
@@ -64,11 +67,10 @@ def BBCompression(img,ansstack,model,opt):
         index_list.append(x)
         sample_list.append(discretization_centres[x])
     z_sample=np.asarray(sample_list).reshape(1,-1)
-
     with torch.no_grad():
         x_p=decoder(torch.tensor(z_sample,dtype=torch.float32).to(opt['device'])).cpu().numpy()
 
-    if opt['obs_dis']=='LogisticCA':
+    if opt['obs_dis']=='Logistic':
         c_num=3
         all_means=x_p[:,:c_num,:,:].reshape(c_num,-1)
         log_scales=x_p[:,c_num:2*c_num,:,:].reshape(c_num,-1)
@@ -95,13 +97,6 @@ def BBCompression(img,ansstack,model,opt):
             x_p=np.clip(sigmoid(x_p),1e-3,1-1e-3).reshape(-1)
             for i in range(opt['x_dim']-1,-1,-1):
                 cdf_min,p =bernoulli_stats(x_p[i],int(img[i]),opt['p_prec'])
-                ansstack.push(cdf_min,p)
-        elif opt['obs_dis']=='Logistic':
-            c=int(x_p.shape[1]//2)
-            means,log_scales=x_p[:,:c,:,:].reshape(-1),x_p[:,c:,:,:].reshape(-1)
-
-            for i in range(opt['x_dim']-1,-1,-1):
-                cdf_min,p =dis_logistic_stats(means[i], log_scales[i],int(img[i]*255),opt['p_prec'])
                 ansstack.push(cdf_min,p)
         else:
             raise NotImplementedError
@@ -131,9 +126,9 @@ def BBDecompression(ansstack,model,opt):
 
 
     with torch.no_grad():
-        x_p=decoder(torch.tensor(z_sample,dtype=torch.float32).to(opt['device'])).cpu().numpy()
+        x_p=decoder(torch.tensor(z_sample,dtype=torch.float32).view(1,-1).to(opt['device'])).cpu().numpy()
     
-    if opt['obs_dis']=='LogisticCA':
+    if opt['obs_dis']=='Logistic':
         c_num=3
         all_means=x_p[:,:c_num,:,:].reshape(c_num,-1)
         log_scales=x_p[:,c_num:2*c_num,:,:].reshape(c_num,-1)
@@ -166,14 +161,6 @@ def BBDecompression(ansstack,model,opt):
             x,cdf_min,p=bernoulli_ppf(x_p[i],s_bar,opt['p_prec'])
             ansstack.update(s_bar,cdf_min,p)
             recover_img.append(x)
-    elif opt['obs_dis']=='Logistic':
-        c=int(x_p.shape[1]//2)
-        means,log_scales=x_p[:,:c,:,:].reshape(-1),x_p[:,c:,:,:].reshape(-1)
-        for i in range(opt['x_dim']):
-            s_bar=ansstack.pop()
-            x,cdf_min,p=dis_logistic_ppf(means[i],log_scales[i],s_bar,opt['p_prec'])
-            ansstack.update(s_bar,cdf_min,p)
-            recover_img.append(x/255.)
 
     else:
         raise NotImplementedError
