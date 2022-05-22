@@ -2,13 +2,28 @@ import torchvision
 from torch.utils import data
 import torch
 import numpy as np
-from tqdm import tqdm
 from torchvision import transforms
 import matplotlib.pyplot as plt
 
+def batch_KL_diag_gaussian_std(mu_1, std_1, mu_2, std_2):
+    diag_1 = std_1 ** 2
+    diag_2 = std_2 ** 2
+    ratio = diag_1 / diag_2
+    return 0.5 * (
+        torch.sum((mu_1 - mu_2) ** 2 / diag_2, dim=-1)
+        + torch.sum(ratio, dim=-1)
+        - torch.sum(torch.log(ratio), dim=-1)
+        - mu_1.size(1)
+    )
 
-rescaling     = lambda x : (x - .5) * 2.
-rescaling_inv = lambda x : .5 * x  + .5
+def log_prob_from_logits(x):
+    axis = len(x.size()) - 1
+    m, _ = torch.max(x, dim=axis, keepdim=True)
+    return x - m - torch.log(torch.sum(torch.exp(x - m), dim=axis, keepdim=True))
+
+def softplusinv(x):
+    return torch.log(torch.exp(x)-1)
+
 
 
 def gray_show_many(image,number_sqrt):
@@ -81,3 +96,6 @@ def LoadData(opt):
     test_data_loader = data.DataLoader(test_data, batch_size=opt['test_batch_size'], shuffle=False)
     train_data_evaluation = data.DataLoader(train_data, batch_size=opt['test_batch_size'], shuffle=False)
     return train_data_loader,test_data_loader,train_data_evaluation
+
+
+
