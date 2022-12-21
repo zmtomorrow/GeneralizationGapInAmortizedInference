@@ -24,8 +24,8 @@ class VAE(nn.Module):
                 self.out_channels=2
                 self.encoder=densenet_encoder(input_dim=self.x_flat_dim, h_layer_num=opt['h_layer_num'], z_dim=self.z_dim,if_bn=opt['if_bn'])
                 self.decoder=densenet_decoder(o_dim=2, h_layer_num=opt['h_layer_num'], z_dim=self.z_dim,if_bn=opt['if_bn'])
-                self.criterion  = lambda  data,params : discretized_logistic(params[:,0:1,:,:],params[:,1:2,:,:],data)
-                self.sample_op = lambda params: discretized_logistic_sample(params[:,0:1,:,:],params[:,1:2,:,:])
+                self.criterion  = lambda  data,params : batch_logistic_logp(params[:,0:1,:,:],params[:,1:2,:,:],data)
+                self.sample_op = lambda params: batch_logistic_sample(params[:,0:1,:,:],params[:,1:2,:,:])
             else: 
                 raise NotImplementedError
         
