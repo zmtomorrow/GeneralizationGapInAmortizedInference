@@ -2,6 +2,34 @@ import torch
 import torch.nn.functional as F
 
 
+def batch_logistic_logp(means, log_scales, x):
+    """
+    mean: [n,c,h,w]
+    log_scale: [n,c,h,w]
+    x: [n,c,h,w]
+    """
+    centered_x = x - means
+    inv_stdv = torch.exp(-torch.clamp(log_scales, min=-7.0))
+    cdf_plus = torch.sigmoid(inv_stdv * (centered_x + 1.0 / 255.0))
+    cdf_min = torch.sigmoid(inv_stdv * (centered_x))
+    cdf_plus = torch.where(x > 0.999, torch.ones(1).to(x.device), cdf_plus)
+    cdf_min = torch.where(x < 0.001, torch.zeros(1).to(x.device), cdf_min)
+    return torch.sum(torch.log(cdf_plus - cdf_min + 1e-7), (1, 2, 3)).mean()
+
+
+def batch_logistic_sample(means, log_scales):
+    """
+    mean: [n,c,h,w]
+    log_scale: [n,c,h,w]
+    x: [n,c,h,w]
+    """
+    std = torch.exp(torch.clamp(log_scales, min=-7.0))
+    u = torch.rand_like(means)
+    continous_sample = torch.clamp(
+        means + std * (torch.log(u) - torch.log(1 - u)), 0.0, 1.0
+    )
+    return torch.round(continous_sample * 255.0) / 255.0
+
 def discretized_logistic(x,l):
     means=l[:,0:3,:,:]
     log_scales=l[:,3:6,:,:]
